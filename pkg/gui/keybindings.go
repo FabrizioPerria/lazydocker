@@ -58,6 +58,24 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 	bindings := []*Binding{
 		{
 			ViewName: "",
+			Key:      gocui.KeyArrowUp,
+			Modifier: gocui.ModNone,
+			Handler:  wrappedHandler(gui.scrollUpLogs),
+		},
+		{
+			ViewName: "",
+			Key:      gocui.KeyArrowDown,
+			Modifier: gocui.ModNone,
+			Handler:  wrappedHandler(gui.scrollDownLogs),
+		},
+		{
+			ViewName: "",
+			Key:      gocui.KeyEsc,
+			Modifier: gocui.ModNone,
+			Handler:  wrappedHandler(gui.escape),
+		},
+		{
+			ViewName: "",
 			Key:      gocui.KeyEsc,
 			Modifier: gocui.ModNone,
 			Handler:  wrappedHandler(gui.escape),
@@ -509,6 +527,69 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 			Handler:     wrappedHandler(gui.prevScreenMode),
 			Description: gui.Tr.LcPrevScreenMode,
 		},
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         'e',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleExpandLogLine),
+		// 	Description: gui.Tr.ExpandLogLine,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         'c',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleCollapseLogLine),
+		// 	Description: gui.Tr.CollapseLogLine,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         'E',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleExpandAllLogLines),
+		// 	Description: gui.Tr.ExpandAllLogLines,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         'C',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleCollapseAllLogLines),
+		// 	Description: gui.Tr.CollapseAllLogLines,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         't',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleToggleTimestamps),
+		// 	Description: gui.Tr.ToggleTimestamps,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         'l',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleLogLevelFilter),
+		// 	Description: gui.Tr.FilterLogLevel,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         '/',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleSearchLogs),
+		// 	Description: gui.Tr.SearchLogs,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         'n',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handleNextSearchResult),
+		// 	Description: gui.Tr.NextSearchResult,
+		// },
+		// {
+		// 	ViewName:    "main",
+		// 	Key:         'N',
+		// 	Modifier:    gocui.ModNone,
+		// 	Handler:     wrappedHandler(gui.handlePrevSearchResult),
+		// 	Description: gui.Tr.PrevSearchResult,
+		// },
 	}
 
 	for _, panel := range gui.allSidePanels() {
@@ -525,10 +606,10 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 	setUpDownClickBindings := func(viewName string, onUp func() error, onDown func() error, onClick func() error) {
 		bindings = append(bindings, []*Binding{
 			{ViewName: viewName, Key: 'k', Modifier: gocui.ModNone, Handler: wrappedHandler(onUp)},
-			{ViewName: viewName, Key: gocui.KeyArrowUp, Modifier: gocui.ModNone, Handler: wrappedHandler(onUp)},
+			// {ViewName: viewName, Key: gocui.KeyArrowUp, Modifier: gocui.ModNone, Handler: wrappedHandler(onUp)},
 			{ViewName: viewName, Key: gocui.MouseWheelUp, Modifier: gocui.ModNone, Handler: wrappedHandler(onUp)},
 			{ViewName: viewName, Key: 'j', Modifier: gocui.ModNone, Handler: wrappedHandler(onDown)},
-			{ViewName: viewName, Key: gocui.KeyArrowDown, Modifier: gocui.ModNone, Handler: wrappedHandler(onDown)},
+			// {ViewName: viewName, Key: gocui.KeyArrowDown, Modifier: gocui.ModNone, Handler: wrappedHandler(onDown)},
 			{ViewName: viewName, Key: gocui.MouseWheelDown, Modifier: gocui.ModNone, Handler: wrappedHandler(onDown)},
 			{ViewName: viewName, Key: gocui.MouseLeft, Modifier: gocui.ModNone, Handler: wrappedHandler(onClick)},
 		}...)
@@ -611,3 +692,6 @@ func wrappedHandler(f func() error) func(*gocui.Gui, *gocui.View) error {
 		return f()
 	}
 }
+
+// func (gui *Gui) handleExpandLogLine() error {
+// }

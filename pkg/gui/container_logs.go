@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/fatih/color"
+	"github.com/jesseduffield/gocui"
 	"github.com/jesseduffield/lazydocker/pkg/commands"
 	"github.com/jesseduffield/lazydocker/pkg/tasks"
 	"github.com/jesseduffield/lazydocker/pkg/utils"
@@ -104,49 +106,95 @@ func (gui *Gui) promptToReturn() {
 	}
 }
 
+type ContainerLogsView struct {
+    lines     []string
+    selected  int
+    scroll    int
+    maxHeight int
+	writer    *io.Writer
+}
 func (gui *Gui) writeContainerLogs(ctr *commands.Container, ctx context.Context, writer io.Writer) error {
-	readCloser, err := gui.DockerCommand.Client.ContainerLogs(ctx, ctr.ID, container.LogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Timestamps: gui.Config.UserConfig.Logs.Timestamps,
-		Since:      gui.Config.UserConfig.Logs.Since,
-		Tail:       gui.Config.UserConfig.Logs.Tail,
-		Follow:     true,
-	})
-	if err != nil {
-		gui.Log.Error(err)
-		return err
-	}
-	defer readCloser.Close()
+    gui.State.LogsView = &ContainerLogsView{
+        lines:    make([]string, 0),
+        selected: -1,
+        scroll:   0,
+		writer:   &writer,
+    }
+	logsView := gui.State.LogsView
 
-	if !ctr.DetailsLoaded() {
-		// loop until the details load or context is cancelled, using timer
-		ticker := time.NewTicker(time.Millisecond * 100)
-		defer ticker.Stop()
-	outer:
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case <-ticker.C:
-				if ctr.DetailsLoaded() {
-					break outer
-				}
-			}
-		}
-	}
+    readCloser, err := gui.DockerCommand.Client.ContainerLogs(ctx, ctr.ID, container.LogsOptions{
+        ShowStdout: true,
+        ShowStderr: true,
+        Timestamps: gui.Config.UserConfig.Logs.Timestamps,
+        Since:      gui.Config.UserConfig.Logs.Since,
+        Tail:       gui.Config.UserConfig.Logs.Tail,
+        Follow:     true,
+    })
+    if err != nil {
+        gui.Log.Error(err)
+        return err
+    }
+    defer readCloser.Close()
 
-	if ctr.Details.Config.Tty {
-		_, err = io.Copy(writer, readCloser)
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err = stdcopy.StdCopy(writer, writer, readCloser)
-		if err != nil {
-			return err
-		}
-	}
+    pr, pw := io.Pipe()
+    go func() {
+        defer pw.Close()
+        if ctr.Details.Config.Tty {
+            io.Copy(pw, readCloser)
+        } else {
+            stdcopy.StdCopy(pw, pw, readCloser)
+        }
+    }()
 
-	return nil
+    scanner := bufio.NewScanner(pr)
+    index := 0
+    for scanner.Scan() {
+        select {
+        case <-ctx.Done():
+            return nil
+        default:
+            line := scanner.Text()
+            // Format each line with a number prefix and separator
+            formattedLine := fmt.Sprintf("[%d] ┃ %s", 
+                index,
+                line,
+            )
+			logsView.lines = append(logsView.lines, formattedLine)
+			logsView.selected = len(logsView.lines) - 1 // Select the last line by default
+            gui.g.Update(func(g *gocui.Gui) error {
+                return gui.renderLogsView()
+            })
+            index++
+        }
+    }
+
+    return scanner.Err()
+}
+
+func (gui *Gui) renderLogsView() error {
+    logsView := gui.State.LogsView
+	v := logsView.writer
+    for i, line := range logsView.lines {
+        if i == logsView.selected {
+            fmt.Fprintf(*v, "\x1b[7m%s\x1b[0m\n", line)  // Only add highlighting during render
+        } else {
+            fmt.Fprintln(*v, line)
+        }
+    }
+    return nil
+}
+
+func (gui *Gui) scrollUpLogs() error {
+	logsView := gui.State.LogsView
+	if logsView.selected > 0 {
+		logsView.selected--
+	}
+	return gui.renderLogsView()
+}
+func (gui *Gui) scrollDownLogs() error {
+	logsView := gui.State.LogsView
+	if logsView.selected < len(logsView.lines)-1 {
+		logsView.selected++
+	}
+	return gui.renderLogsView()
 }
