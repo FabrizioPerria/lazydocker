@@ -411,6 +411,9 @@ func (gui *Gui) escape() error {
 	if gui.State.Filter.active {
 		return gui.clearFilter()
 	}
+	if gui.State.FilterMain.active {
+		return gui.clearFilterMain()
+	}
 
 	return nil
 }

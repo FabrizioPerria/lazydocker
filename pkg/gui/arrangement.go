@@ -29,7 +29,7 @@ func (gui *Gui) getWindowDimensions(informationStr string, appStatus string) map
 		sidePanelsDirection = boxlayout.ROW
 	}
 
-	showInfoSection := gui.Config.UserConfig.Gui.ShowBottomLine || gui.State.Filter.active
+	showInfoSection := gui.Config.UserConfig.Gui.ShowBottomLine || gui.State.Filter.active || gui.State.FilterMain.active
 	infoSectionSize := 0
 	if showInfoSection {
 		infoSectionSize = 1
@@ -107,6 +107,18 @@ func (gui *Gui) infoSectionChildren(informationStr string, appStatus string) []*
 			},
 			{
 				Window: "filter",
+				Weight: 1,
+			},
+		}...)
+	}
+	if gui.State.FilterMain.active {
+		return append(result, []*boxlayout.Box{
+			{
+				Window: "filterPrefix",
+				Size:   runewidth.StringWidth(gui.filterPrompt()),
+			},
+			{
+				Window: "filterMain",
 				Weight: 1,
 			},
 		}...)
