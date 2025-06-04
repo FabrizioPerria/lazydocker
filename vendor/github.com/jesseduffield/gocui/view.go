@@ -228,12 +228,33 @@ func (v *View) SelectSearchResult(index int) error {
 	if index > itemCount-1 {
 		index = itemCount - 1
 	}
+    pos := v.searcher.searchPositions[index]
+    
+    // If wrapping is enabled, calculate the actual y position
+    targetY := pos.y
+    if v.Wrap {
+        maxX, _ := v.Size()
+        if maxX <= 0 {
+            maxX = 1
+        }
+        
+        // Use the wrapped line map to get the correct y position
+        wrappedStartY := v.searcher.wrappedLineMap[pos.y]
+        wrapsBeforeX := pos.x / maxX
+        targetY = wrappedStartY + wrapsBeforeX
+    }
 
-	y := v.searcher.searchPositions[index].y
-
-	v.FocusPoint(v.ox, y)
+    // Ensure the target line is visible in the view
+    _, viewHeight := v.Size()
+    if targetY < v.oy {
+        // Scroll up if target is above current view
+        v.SetOrigin(v.ox, targetY)
+    } else if targetY >= v.oy+viewHeight {
+        // Scroll down if target is below current view
+        v.SetOrigin(v.ox, targetY-viewHeight+1)
+    }
 	if v.searcher.onSelectItem != nil {
-		return v.searcher.onSelectItem(y, index, itemCount)
+		return v.searcher.onSelectItem(targetY, index, itemCount)
 	}
 	return nil
 }
