@@ -9,6 +9,17 @@ import (
 func (gui *Gui) scrollUpMain() error {
 	mainView := gui.Views.Main
 	mainView.Autoscroll = false
+	mainView.SelBgColor = gocui.ColorGreen
+	mainView.SelFgColor = gocui.ColorBlack
+	mainView.Search("2000")
+	// mainView.Highlight = true
+	// indices := mainView.GetSearchLineIndices()
+	// // tot := len(indices)
+	// for _, match := range mainView.GetSearchLineIndices() {
+	// 	mainView.SetHighlight(match, true)
+	// }
+	// gui.Views.Information.Clear()
+	// gui.Views.Information.WriteString(fmt.Sprintf("Search: (%d)", indices[0]))
 	ox, oy := mainView.Origin()
 	newOy := int(math.Max(0, float64(oy-gui.Config.UserConfig.Gui.ScrollHeight)))
 	return mainView.SetOrigin(ox, newOy)
