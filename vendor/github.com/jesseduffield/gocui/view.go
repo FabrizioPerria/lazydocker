@@ -1145,9 +1145,11 @@ func (v *View) draw() error {
 			}
 			if matched, selected := v.isPatternMatchedRune(x, y); matched {
 				if selected {
-					bgColor = ColorBlue
+					bgColor = ColorRed
+					fgColor = ColorCyan
 				} else {
 					bgColor = ColorCyan
+					fgColor = ColorRed
 				}
 			}
 

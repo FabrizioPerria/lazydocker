@@ -6,6 +6,11 @@ import (
 	"github.com/jesseduffield/gocui"
 )
 
+func (gui *Gui) handleMainFilter() error {
+	gui.State.FilterMain.active = true
+	return gui.switchFocus(gui.Views.FilterMain)
+}
+
 func (gui *Gui) handleOpenFilter() error {
 	panel, ok := gui.currentListPanel()
 	if !ok {
@@ -28,11 +33,27 @@ func (gui *Gui) onNewFilterNeedle(value string) error {
 	return gui.State.Filter.panel.RerenderList()
 }
 
+func (gui *Gui) onNewFilterNeedleMain(value string) error {
+	gui.State.FilterMain.needle = value
+	return gui.Views.Main.Search(value)
+}
+
 func (gui *Gui) wrapEditor(f func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) bool) func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) bool {
 	return func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) bool {
 		matched := f(v, key, ch, mod)
 		if matched {
 			if err := gui.onNewFilterNeedle(v.TextArea.GetContent()); err != nil {
+				gui.Log.Error(err)
+			}
+		}
+		return matched
+	}
+}
+func (gui *Gui) wrapEditorMain(f func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) bool) func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) bool {
+	return func(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) bool {
+		matched := f(v, key, ch, mod)
+		if matched {
+			if err := gui.onNewFilterNeedleMain(v.TextArea.GetContent()); err != nil {
 				gui.Log.Error(err)
 			}
 		}
@@ -67,6 +88,15 @@ func (gui *Gui) clearFilter() error {
 // returns to the list view with the filter still applied
 func (gui *Gui) commitFilter() error {
 	if gui.State.Filter.needle == "" {
+		if err := gui.clearFilter(); err != nil {
+			return err
+		}
+	}
+
+	return gui.returnFocus()
+}
+func (gui *Gui) commitFilterMain() error {
+	if gui.State.FilterMain.needle == "" {
 		if err := gui.clearFilter(); err != nil {
 			return err
 		}

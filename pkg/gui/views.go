@@ -45,6 +45,7 @@ type Views struct {
 	FilterPrefix *gocui.View
 	// appears next to the SearchPrefix view, it's where you type in the search string
 	Filter *gocui.View
+	FilterMain *gocui.View
 
 	// popups
 	Confirmation *gocui.View
@@ -80,6 +81,7 @@ func (gui *Gui) orderedViewNameMappings() []viewNameMapping {
 		{viewPtr: &gui.Views.AppStatus, name: "appStatus", autoPosition: true},
 		{viewPtr: &gui.Views.Information, name: "information", autoPosition: true},
 		{viewPtr: &gui.Views.Filter, name: "filter", autoPosition: true},
+		{viewPtr: &gui.Views.FilterMain, name: "filterMain", autoPosition: true},
 		{viewPtr: &gui.Views.FilterPrefix, name: "filterPrefix", autoPosition: true},
 
 		// popups.
@@ -178,6 +180,11 @@ func (gui *Gui) createAllViews() error {
 	gui.Views.Filter.Frame = false
 	gui.Views.Filter.Editor = gocui.EditorFunc(gui.wrapEditor(gocui.SimpleEditor))
 
+	gui.Views.FilterMain.BgColor = gocui.ColorDefault
+	gui.Views.FilterMain.FgColor = gocui.ColorGreen
+	gui.Views.FilterMain.Editable = true
+	gui.Views.FilterMain.Frame = false
+	gui.Views.FilterMain.Editor = gocui.EditorFunc(gui.wrapEditorMain(gocui.SimpleEditor))
 	return nil
 }
 

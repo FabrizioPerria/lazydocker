@@ -21,6 +21,9 @@ func (gui *Gui) newLineFocused(v *gocui.View) error {
 	case "main":
 		v.Highlight = false
 		return nil
+	case "filterMain":
+		v.Highlight = false
+		return nil
 	case "filter":
 		return nil
 	default:
