@@ -531,6 +531,7 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 			{ViewName: viewName, Key: gocui.KeyArrowDown, Modifier: gocui.ModNone, Handler: wrappedHandler(onDown)},
 			{ViewName: viewName, Key: gocui.MouseWheelDown, Modifier: gocui.ModNone, Handler: wrappedHandler(onDown)},
 			{ViewName: viewName, Key: gocui.MouseLeft, Modifier: gocui.ModNone, Handler: wrappedHandler(onClick)},
+			// {ViewName: viewName, Key: gocui.KeyEnter, Modifier: gocui.ModNone, Handler: wrappedHandler(gui.commitFilterMain)},
 		}...)
 	}
 
@@ -582,6 +583,13 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 				Key:         '/',
 				Modifier:    gocui.ModNone,
 				Handler:     wrappedHandler(gui.handleOpenFilter),
+				Description: gui.Tr.LcFilter,
+			})
+			bindings = append(bindings, &Binding{
+				ViewName:    panel.GetView().Name(),
+				Key:         '/',
+				Modifier:    gocui.ModAlt,
+				Handler:     wrappedHandler(gui.handleMainFilter),
 				Description: gui.Tr.LcFilter,
 			})
 		}

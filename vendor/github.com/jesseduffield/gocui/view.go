@@ -187,6 +187,7 @@ type searcher struct {
 	searchPositions    []cellPos
 	currentSearchIndex int
 	onSelectItem       func(int, int, int) error
+    wrappedLineMap     []int
 }
 
 func (v *View) SetOnSelectItem(onSelectItem func(int, int, int) error) {
@@ -227,12 +228,33 @@ func (v *View) SelectSearchResult(index int) error {
 	if index > itemCount-1 {
 		index = itemCount - 1
 	}
+    pos := v.searcher.searchPositions[index]
+    
+    // If wrapping is enabled, calculate the actual y position
+    targetY := pos.y
+    if v.Wrap {
+        maxX, _ := v.Size()
+        if maxX <= 0 {
+            maxX = 1
+        }
+        
+        // Use the wrapped line map to get the correct y position
+        wrappedStartY := v.searcher.wrappedLineMap[pos.y]
+        wrapsBeforeX := pos.x / maxX
+        targetY = wrappedStartY + wrapsBeforeX
+    }
 
-	y := v.searcher.searchPositions[index].y
-
-	v.FocusPoint(v.ox, y)
+    // Ensure the target line is visible in the view
+    _, viewHeight := v.Size()
+    if targetY < v.oy {
+        // Scroll up if target is above current view
+        v.SetOrigin(v.ox, targetY)
+    } else if targetY >= v.oy+viewHeight {
+        // Scroll down if target is below current view
+        v.SetOrigin(v.ox, targetY-viewHeight+1)
+    }
 	if v.searcher.onSelectItem != nil {
-		return v.searcher.onSelectItem(y, index, itemCount)
+		return v.searcher.onSelectItem(targetY, index, itemCount)
 	}
 	return nil
 }
@@ -240,6 +262,15 @@ func (v *View) SelectSearchResult(index int) error {
 // Returns <current match index>, <total matches>
 func (v *View) GetSearchStatus() (int, int) {
 	return v.searcher.currentSearchIndex, len(v.searcher.searchPositions)
+}
+
+func (v *View) GetSearchLineIndices() []int {
+	// return the y indices of the search results
+	indices := make([]int, len(v.searcher.searchPositions))
+	for i, pos := range v.searcher.searchPositions {
+		indices[i] = pos.y
+	}
+	return indices
 }
 
 func (v *View) Search(str string) error {
@@ -958,8 +989,17 @@ func (v *View) updateSearchPositions() {
 		}
 
 		v.searcher.searchPositions = []cellPos{}
+		v.searcher.wrappedLineMap = make([]int, len(v.lines))
+		actualLineIndex := 0
+		maxX, _ := v.Size()
 		for y, line := range v.lines {
 			x := 0
+			v.searcher.wrappedLineMap[y] = actualLineIndex
+
+			if v.Wrap {
+				actualLineIndex += len(line) / maxX
+			}
+			actualLineIndex += 1
 			for startIdx, c := range line {
 				found := true
 				offset := 0
@@ -1105,9 +1145,11 @@ func (v *View) draw() error {
 			}
 			if matched, selected := v.isPatternMatchedRune(x, y); matched {
 				if selected {
-					bgColor = ColorCyan
+					bgColor = ColorRed
+					fgColor = ColorCyan
 				} else {
-					bgColor = ColorYellow
+					bgColor = ColorCyan
+					fgColor = ColorRed
 				}
 			}
 
@@ -1137,15 +1179,32 @@ func (v *View) viewLineLengthIgnoringTrailingBlankLines() int {
 }
 
 func (v *View) isPatternMatchedRune(x, y int) (bool, bool) {
-	searchStringWidth := runewidth.StringWidth(v.searcher.searchString)
-	for i, pos := range v.searcher.searchPositions {
-		adjustedY := y + v.oy
-		adjustedX := x + v.ox
-		if adjustedY == pos.y && adjustedX >= pos.x && adjustedX < pos.x+searchStringWidth {
-			return true, i == v.searcher.currentSearchIndex
-		}
-	}
-	return false, false
+    searchStringWidth := runewidth.StringWidth(v.searcher.searchString)
+    adjustedY := y + v.oy
+    adjustedX := x + v.ox
+    
+    maxX, _ := v.Size()
+    if maxX <= 0 {
+        maxX = 1
+    }
+
+    for i, pos := range v.searcher.searchPositions {
+        if v.Wrap {
+            wrappedStartY := v.searcher.wrappedLineMap[pos.y]
+            wrapsBeforeX := pos.x / maxX
+            wrappedY := wrappedStartY + wrapsBeforeX
+            wrappedX := pos.x % maxX
+
+            if adjustedY == wrappedY && adjustedX >= wrappedX && adjustedX < wrappedX+searchStringWidth {
+                return true, i == v.searcher.currentSearchIndex
+            }
+        } else {
+            if adjustedY == pos.y && adjustedX >= pos.x && adjustedX < pos.x+searchStringWidth {
+                return true, i == v.searcher.currentSearchIndex
+            }
+        }
+    }
+    return false, false
 }
 
 // realPosition returns the position in the internal buffer corresponding to the

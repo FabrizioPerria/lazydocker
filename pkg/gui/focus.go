@@ -21,6 +21,9 @@ func (gui *Gui) newLineFocused(v *gocui.View) error {
 	case "main":
 		v.Highlight = false
 		return nil
+	case "filterMain":
+		v.Highlight = false
+		return nil
 	case "filter":
 		return nil
 	default:
@@ -57,6 +60,11 @@ func (gui *Gui) switchFocusAux(newView *gocui.View) error {
 			return err
 		}
 	}
+	// if !lo.Contains(newViewStack, gui.State.FilterMain.panel.GetView().Name()) {
+	// 	if err := gui.clearFilter(); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// TODO: add 'onFocusLost' hook
 	if !lo.Contains(newViewStack, "menu") {
@@ -96,7 +104,7 @@ func (gui *Gui) removeViewFromStack(view *gocui.View) {
 func (gui *Gui) pushView(name string) {
 	// No matter what view we're pushing, we first remove all popup panels from the stack
 	// (unless it's the search view because we may be searching the menu panel)
-	if name != "filter" {
+	if name != "filter" && name != "filterMain" {
 		gui.State.ViewStack = lo.Filter(gui.State.ViewStack, func(viewName string, _ int) bool {
 			return !gui.isPopupPanel(viewName)
 		})

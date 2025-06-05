@@ -87,6 +87,7 @@ type guiState struct {
 	// Maintains the state of manual filtering i.e. typing in a substring
 	// to filter on in the current panel.
 	Filter filterState
+	FilterMain filterState
 }
 
 type filterState struct {
@@ -409,6 +410,9 @@ func (gui *Gui) quit(g *gocui.Gui, v *gocui.View) error {
 func (gui *Gui) escape() error {
 	if gui.State.Filter.active {
 		return gui.clearFilter()
+	}
+	if gui.State.FilterMain.active {
+		return gui.clearFilterMain()
 	}
 
 	return nil
