@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jesseduffield/gocui"
 )
@@ -51,6 +52,14 @@ func (b *Binding) GetKey() string {
 	}
 
 	return fmt.Sprintf("%c", key)
+}
+
+func (gui *Gui) promptSearchLogs(g *gocui.Gui, v *gocui.View) error {
+	return gui.createPromptPanel("Search Logs", func(g *gocui.Gui, v *gocui.View) error {
+		gui.SearchTerm = strings.TrimSpace(v.Buffer())
+		gui.renderLogBufferToMainView()
+		return nil
+	})
 }
 
 // GetInitialKeybindings is a function.
@@ -490,6 +499,12 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 			Key:      'H',
 			Modifier: gocui.ModNone,
 			Handler:  gui.scrollLeftMain,
+		},
+		{
+			ViewName: "",
+			Key:      '/',
+			Modifier: gocui.ModAlt,
+			Handler:  gui.promptSearchLogs,
 		},
 		{
 			ViewName: "",

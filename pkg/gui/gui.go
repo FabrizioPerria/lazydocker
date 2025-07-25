@@ -45,6 +45,10 @@ type Gui struct {
 	Mutexes
 
 	Panels Panels
+
+	Logbuffer *LogBuffer
+
+	SearchTerm string
 }
 
 type Panels struct {

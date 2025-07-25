@@ -1,16 +1,19 @@
 package gui
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/pkg/stdcopy"
+	// "github.com/docker/docker/pkg/stdcopy"
 	"github.com/fatih/color"
+	"github.com/jesseduffield/gocui"
 	"github.com/jesseduffield/lazydocker/pkg/commands"
 	"github.com/jesseduffield/lazydocker/pkg/tasks"
 	"github.com/jesseduffield/lazydocker/pkg/utils"
@@ -29,17 +32,37 @@ func (gui *Gui) renderContainerLogsToMain(container *commands.Container) tasks.T
 	})
 }
 
+func (gui *Gui) renderLogBufferToMainView() {
+	mainView := gui.Views.Main
+	mainView.Clear()
+
+	lines := gui.Logbuffer.GetLines()
+	keyword := gui.SearchTerm
+
+	for _, line := range lines {
+		if keyword != "" && strings.Contains(strings.ToLower(line), strings.ToLower(keyword)) {
+			highlighted := strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[31m%s\x1b[0m", keyword)) // red
+			fmt.Fprintln(mainView, highlighted)
+		} else {
+			fmt.Fprintln(mainView, line)
+		}
+	}
+}
+
 func (gui *Gui) renderContainerLogsToMainAux(container *commands.Container, ctx context.Context, notifyStopped chan struct{}) {
 	gui.clearMainView()
 	defer func() {
 		notifyStopped <- struct{}{}
 	}()
 
-	mainView := gui.Views.Main
+	gui.Logbuffer = NewLogBuffer()
+	multiWriter := io.MultiWriter(gui.Logbuffer)
 
-	if err := gui.writeContainerLogs(container, ctx, mainView); err != nil {
-		gui.Log.Error(err)
-	}
+	go func() {
+		if err := gui.writeContainerLogs(container, ctx, multiWriter); err != nil {
+			gui.Log.Error(err)
+		}
+	}()
 
 	// if we are here because the task has been stopped, we should return
 	// if we are here then the container must have exited, meaning we should wait until it's back again before
@@ -50,6 +73,10 @@ func (gui *Gui) renderContainerLogsToMainAux(container *commands.Container, ctx 
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			gui.g.Update(func(g *gocui.Gui) error {
+				gui.renderLogBufferToMainView()
+				return nil
+			})
 			result, err := container.Inspect()
 			if err != nil {
 				// if we get an error, then the container has probably been removed so we'll get out of here
@@ -136,17 +163,42 @@ func (gui *Gui) writeContainerLogs(ctr *commands.Container, ctx context.Context,
 		}
 	}
 
-	if ctr.Details.Config.Tty {
-		_, err = io.Copy(writer, readCloser)
-		if err != nil {
-			return err
-		}
-	} else {
-		_, err = stdcopy.StdCopy(writer, writer, readCloser)
-		if err != nil {
-			return err
+	reader := bufio.NewReader(readCloser)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				}
+				return err
+			}
+
+			// append to buffer
+			gui.Logbuffer.Write([]byte(line))
+
+			// trigger UI update
+			gui.g.Update(func(g *gocui.Gui) error {
+				gui.renderLogBufferToMainView()
+				return nil
+			})
 		}
 	}
+	// if ctr.Details.Config.Tty {
+	// 	_, err = io.Copy(writer, readCloser)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// } else {
+	// 	_, err = stdcopy.StdCopy(writer, writer, readCloser)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
