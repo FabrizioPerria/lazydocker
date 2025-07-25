@@ -57,9 +57,43 @@ func (b *Binding) GetKey() string {
 func (gui *Gui) promptSearchLogs(g *gocui.Gui, v *gocui.View) error {
 	return gui.createPromptPanel("Search Logs", func(g *gocui.Gui, v *gocui.View) error {
 		gui.SearchTerm = strings.TrimSpace(v.Buffer())
+		gui.currentMatchIndex = 0
+
 		gui.renderLogBufferToMainView()
 		return nil
 	})
+}
+
+func (gui *Gui) gotoNextMatch(g *gocui.Gui, v *gocui.View) error {
+	if len(gui.matchLines) == 0 {
+		return nil
+	}
+	gui.currentMatchIndex = (gui.currentMatchIndex + 1) % len(gui.matchLines)
+	return gui.scrollToMatch()
+}
+
+func (gui *Gui) gotoPrevMatch(g *gocui.Gui, v *gocui.View) error {
+	if len(gui.matchLines) == 0 {
+		return nil
+	}
+	gui.currentMatchIndex = (gui.currentMatchIndex - 1 + len(gui.matchLines)) % len(gui.matchLines)
+	return gui.scrollToMatch()
+}
+
+func (gui *Gui) scrollToMatch() error {
+	v := gui.Views.Main
+	lineNum := gui.matchLines[gui.currentMatchIndex]
+
+	// _, y := v.Origin()
+	// height := v.Height()
+
+	if err := v.SetOrigin(0, lineNum); err != nil {
+		return err
+	}
+	if err := v.SetCursor(0, 0); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetInitialKeybindings is a function.
@@ -505,6 +539,18 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 			Key:      '/',
 			Modifier: gocui.ModAlt,
 			Handler:  gui.promptSearchLogs,
+		},
+		{
+			ViewName: "",
+			Key:      'n',
+			Modifier: gocui.ModAlt,
+			Handler:  gui.gotoNextMatch,
+		},
+		{
+			ViewName: "",
+			Key:      'N',
+			Modifier: gocui.ModAlt,
+			Handler:  gui.gotoPrevMatch,
 		},
 		{
 			ViewName: "",

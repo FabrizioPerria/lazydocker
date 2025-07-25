@@ -49,6 +49,10 @@ type Gui struct {
 	Logbuffer *LogBuffer
 
 	SearchTerm string
+
+	matchLines []int
+	currentMatchIndex int
+
 }
 
 type Panels struct {

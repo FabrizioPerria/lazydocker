@@ -39,8 +39,9 @@ func (gui *Gui) renderLogBufferToMainView() {
 	lines := gui.Logbuffer.GetLines()
 	keyword := gui.SearchTerm
 
-	for _, line := range lines {
+	for i, line := range lines {
 		if keyword != "" && strings.Contains(strings.ToLower(line), strings.ToLower(keyword)) {
+			gui.matchLines = append(gui.matchLines, i) // track match positions
 			highlighted := strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[31m%s\x1b[0m", keyword)) // red
 			fmt.Fprintln(mainView, highlighted)
 		} else {
