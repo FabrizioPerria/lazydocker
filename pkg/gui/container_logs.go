@@ -48,9 +48,9 @@ func (gui *Gui) renderLogBufferToMainView() bool {
 
 		var output string
 		if isMatch && len(gui.matchLines) > 0 && i == gui.matchLines[gui.currentMatchIndex] {
-			output = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[37;41m%s\x1b[0m", keyword))
+			output = gui.Logbuffer.ColorKeywordInLine(i, keyword)
 		} else if isMatch {
-			output = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[31m%s\x1b[0m", keyword))
+			output = gui.Logbuffer.ColorKeywordInLine(i, keyword)
 		} else {
 			output = line
 		}

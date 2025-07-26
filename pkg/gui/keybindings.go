@@ -70,18 +70,24 @@ func (gui *Gui) promptSearchLogs(g *gocui.Gui, v *gocui.View) error {
 			gui.createErrorPanel("No matches found")
 			return nil
 		}
-		gui.gotoPrevMatch(g, v)
-		gui.scrollUpMain()
-		gui.scrollDownMain()
+		// gui.gotoPrevMatch(g, v)
+		// gui.scrollUpMain()
+		// gui.scrollDownMain()
 		return nil
 	})
 }
+
 
 func (gui *Gui) gotoNextMatch(g *gocui.Gui, v *gocui.View) error {
 	if len(gui.matchLines) == 0 {
 		return nil
 	}
+
+	gui.Logbuffer.HighlightToColorKeyword(gui.matchLines[gui.currentMatchIndex], gui.SearchTerm)
 	gui.currentMatchIndex = (gui.currentMatchIndex + 1) % len(gui.matchLines)
+	gui.Logbuffer.ColorToHighlightKeyword(gui.matchLines[gui.currentMatchIndex], gui.SearchTerm)
+
+	// gui.renderLogBufferToMainView()
 	return gui.scrollToMatch()
 }
 
@@ -89,16 +95,17 @@ func (gui *Gui) gotoPrevMatch(g *gocui.Gui, v *gocui.View) error {
 	if len(gui.matchLines) == 0 {
 		return nil
 	}
+	gui.Logbuffer.HighlightToColorKeyword(gui.matchLines[gui.currentMatchIndex], gui.SearchTerm)
 	gui.currentMatchIndex = (gui.currentMatchIndex - 1 + len(gui.matchLines)) % len(gui.matchLines)
+	gui.Logbuffer.ColorToHighlightKeyword(gui.matchLines[gui.currentMatchIndex], gui.SearchTerm)
+
+	// gui.renderLogBufferToMainView()
 	return gui.scrollToMatch()
 }
 
 func (gui *Gui) scrollToMatch() error {
 	v := gui.Views.Main
 	lineNum := gui.matchLines[gui.currentMatchIndex]
-
-	// _, y := v.Origin()
-	// height := v.Height()
 
 	if err := v.SetOrigin(0, lineNum); err != nil {
 		return err
