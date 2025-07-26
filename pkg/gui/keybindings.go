@@ -54,12 +54,25 @@ func (b *Binding) GetKey() string {
 	return fmt.Sprintf("%c", key)
 }
 
+func (gui *Gui) resetLogViewForSearch() {
+	gui.Views.Main.Clear()
+	gui.matchLines = []int{}
+	gui.lastRenderedLine = 0
+}
+
 func (gui *Gui) promptSearchLogs(g *gocui.Gui, v *gocui.View) error {
 	return gui.createPromptPanel("Search Logs", func(g *gocui.Gui, v *gocui.View) error {
 		gui.SearchTerm = strings.TrimSpace(v.Buffer())
+		gui.resetLogViewForSearch()
 		gui.currentMatchIndex = 0
 
-		gui.renderLogBufferToMainView()
+		if !gui.renderLogBufferToMainView() {
+			gui.createErrorPanel("No matches found")
+			return nil
+		}
+		gui.gotoPrevMatch(g, v)
+		gui.scrollUpMain()
+		gui.scrollDownMain()
 		return nil
 	})
 }

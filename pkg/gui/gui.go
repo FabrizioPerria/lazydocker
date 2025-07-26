@@ -52,6 +52,7 @@ type Gui struct {
 
 	matchLines []int
 	currentMatchIndex int
+	lastRenderedLine int
 
 }
 

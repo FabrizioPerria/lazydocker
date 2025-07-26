@@ -22,6 +22,7 @@ func (gui *Gui) handleGoTo(view *gocui.View) func(g *gocui.Gui, v *gocui.View) e
 func (gui *Gui) nextView(g *gocui.Gui, v *gocui.View) error {
 	sideViewNames := gui.sideViewNames()
 	var focusedViewName string
+	gui.resetLogViewForSearch()
 	if v == nil || v.Name() == sideViewNames[len(sideViewNames)-1] {
 		focusedViewName = sideViewNames[0]
 	} else {
@@ -48,6 +49,7 @@ func (gui *Gui) nextView(g *gocui.Gui, v *gocui.View) error {
 func (gui *Gui) previousView(g *gocui.Gui, v *gocui.View) error {
 	sideViewNames := gui.sideViewNames()
 	var focusedViewName string
+	gui.resetLogViewForSearch()
 	if v == nil || v.Name() == sideViewNames[0] {
 		focusedViewName = sideViewNames[len(sideViewNames)-1]
 	} else {

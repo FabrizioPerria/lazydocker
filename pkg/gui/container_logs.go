@@ -31,26 +31,33 @@ func (gui *Gui) renderContainerLogsToMain(container *commands.Container) tasks.T
 	})
 }
 
-func (gui *Gui) renderLogBufferToMainView() {
+func (gui *Gui) renderLogBufferToMainView() bool {
 	mainView := gui.Views.Main
-	mainView.Clear()
 
 	lines := gui.Logbuffer.GetLines()
 	keyword := gui.SearchTerm
-	for i, line := range lines {
+
+	isMatch := false
+	// Only process new lines
+	for i := gui.lastRenderedLine; i < len(lines); i++ {
+		line := lines[i]
 		if keyword != "" && strings.Contains(strings.ToLower(line), strings.ToLower(keyword)) {
-			gui.matchLines = append(gui.matchLines, i) // track match positions
-			var highlighted string
-			if i == gui.matchLines[gui.currentMatchIndex] {
-				highlighted = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[37;41m%s\x1b[0m", keyword)) // white on red
-			} else {
-				highlighted = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[31m%s\x1b[0m", keyword)) // red
-			}
-			fmt.Fprintln(mainView, highlighted)
-		} else {
-			fmt.Fprintln(mainView, line)
+			gui.matchLines = append(gui.matchLines, i)
+			isMatch = true
 		}
+
+		var output string
+		if isMatch && len(gui.matchLines) > 0 && i == gui.matchLines[gui.currentMatchIndex] {
+			output = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[37;41m%s\x1b[0m", keyword))
+		} else if isMatch {
+			output = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[31m%s\x1b[0m", keyword))
+		} else {
+			output = line
+		}
+		fmt.Fprint(mainView, strings.TrimSuffix(output, "\n")+"\n")
 	}
+	gui.lastRenderedLine = len(lines)
+	return isMatch
 }
 
 func (gui *Gui) renderContainerLogsToMainAux(container *commands.Container, ctx context.Context, notifyStopped chan struct{}) {

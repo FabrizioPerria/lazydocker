@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/jesseduffield/gocui"
@@ -11,6 +12,9 @@ func (gui *Gui) scrollUpMain() error {
 	mainView.Autoscroll = false
 	ox, oy := mainView.Origin()
 	newOy := int(math.Max(0, float64(oy-gui.Config.UserConfig.Gui.ScrollHeight)))
+	gui.Views.Project.Clear()
+	fmt.Fprint(gui.Views.Project, fmt.Sprintf("%d - %d", newOy+1, newOy+mainView.Height()))
+
 	return mainView.SetOrigin(ox, newOy)
 }
 

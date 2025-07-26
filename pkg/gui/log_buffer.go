@@ -30,12 +30,13 @@ func (b *LogBuffer) GetLines() []string {
 	b.mutx.Lock()
 	defer b.mutx.Unlock()
 
-	return append([]string(nil), b.lines...)
+	return append([]string{}, b.lines...)
 }
 
 func (b *LogBuffer) Clear() {
 	b.mutx.Lock()
 	defer b.mutx.Unlock()
 
+	panic("Clear() is not implemented yet") // TODO: implement Clear method
 	b.lines = nil
 }
