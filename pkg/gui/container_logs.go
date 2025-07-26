@@ -1,7 +1,6 @@
 package gui
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -11,7 +10,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	// "github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/fatih/color"
 	"github.com/jesseduffield/gocui"
 	"github.com/jesseduffield/lazydocker/pkg/commands"
@@ -38,11 +37,15 @@ func (gui *Gui) renderLogBufferToMainView() {
 
 	lines := gui.Logbuffer.GetLines()
 	keyword := gui.SearchTerm
-
 	for i, line := range lines {
 		if keyword != "" && strings.Contains(strings.ToLower(line), strings.ToLower(keyword)) {
 			gui.matchLines = append(gui.matchLines, i) // track match positions
-			highlighted := strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[31m%s\x1b[0m", keyword)) // red
+			var highlighted string
+			if i == gui.matchLines[gui.currentMatchIndex] {
+				highlighted = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[37;41m%s\x1b[0m", keyword)) // white on red
+			} else {
+				highlighted = strings.ReplaceAll(line, keyword, fmt.Sprintf("\x1b[31m%s\x1b[0m", keyword)) // red
+			}
 			fmt.Fprintln(mainView, highlighted)
 		} else {
 			fmt.Fprintln(mainView, line)
@@ -164,42 +167,17 @@ func (gui *Gui) writeContainerLogs(ctr *commands.Container, ctx context.Context,
 		}
 	}
 
-	reader := bufio.NewReader(readCloser)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					return nil
-				}
-				return err
-			}
-
-			// append to buffer
-			gui.Logbuffer.Write([]byte(line))
-
-			// trigger UI update
-			gui.g.Update(func(g *gocui.Gui) error {
-				gui.renderLogBufferToMainView()
-				return nil
-			})
+	if ctr.Details.Config.Tty {
+		_, err = io.Copy(writer, readCloser)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = stdcopy.StdCopy(writer, writer, readCloser)
+		if err != nil {
+			return err
 		}
 	}
-	// if ctr.Details.Config.Tty {
-	// 	_, err = io.Copy(writer, readCloser)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// } else {
-	// 	_, err = stdcopy.StdCopy(writer, writer, readCloser)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	return nil
 }

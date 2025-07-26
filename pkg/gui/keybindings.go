@@ -536,24 +536,6 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 		},
 		{
 			ViewName: "",
-			Key:      '/',
-			Modifier: gocui.ModAlt,
-			Handler:  gui.promptSearchLogs,
-		},
-		{
-			ViewName: "",
-			Key:      'n',
-			Modifier: gocui.ModAlt,
-			Handler:  gui.gotoNextMatch,
-		},
-		{
-			ViewName: "",
-			Key:      'N',
-			Modifier: gocui.ModAlt,
-			Handler:  gui.gotoPrevMatch,
-		},
-		{
-			ViewName: "",
 			Key:      'L',
 			Modifier: gocui.ModNone,
 			Handler:  gui.scrollRightMain,
@@ -609,6 +591,26 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 	}
 
 	setUpDownClickBindings("main", gui.scrollUpMain, gui.scrollDownMain, gui.handleMainClick)
+	bindings = append(bindings, []*Binding{
+		{
+			ViewName: "main",
+			Key:      '/',
+			Modifier: gocui.ModNone,
+			Handler:  gui.promptSearchLogs,
+		},
+		{
+			ViewName: "main",
+			Key:      'n',
+			Modifier: gocui.ModNone,
+			Handler:  gui.gotoNextMatch,
+		},
+		{
+			ViewName: "",
+			Key:      'N',
+			Modifier: gocui.ModNone,
+			Handler:  gui.gotoPrevMatch,
+		},
+	}...)
 
 	for _, panel := range gui.allSidePanels() {
 		bindings = append(bindings,

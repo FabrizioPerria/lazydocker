@@ -21,7 +21,7 @@ func (b *LogBuffer) Write (p []byte) (n int, err error) {
 	b.mutx.Lock()
 	defer b.mutx.Unlock()
 
-	chunks := strings.Split(string(p), "\n")
+	chunks := strings.Split(strings.TrimRight(string(p), "\n"), "\n")
 	b.lines = append(b.lines, chunks...)
 	return len(p), nil
 }
