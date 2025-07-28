@@ -192,18 +192,27 @@ func (gui *Gui) setInitialViewContent() error {
 }
 
 func (gui *Gui) getInformationContent() string {
-	informationStr := gui.Config.Version
-	if !gui.g.Mouse {
-		return informationStr
+	mainView := gui.Views.Main
+	var informationStr string
+	currentSearch, totalSearches := mainView.GetSearchStatus()
+	if totalSearches > 0 {
+		searchString := mainView.SearchString()
+		attrs := []color.Attribute{color.FgGreen, color.Bold}
+		informationStr = color.New(attrs...).Sprintf("%s: %d/%d", searchString, currentSearch, totalSearches)
 	}
+	// attrs := []color.Attribute{color.FgGreen, color.Bold}
+	// if !gui.g.Mouse {
+	// 	return informationStr
+	// }
 
-	attrs := []color.Attribute{color.FgMagenta}
-	if !hideUnderScores() {
-		attrs = append(attrs, color.Underline)
-	}
+	// attrs := []color.Attribute{color.FgMagenta}
+	// if !hideUnderScores() {
+	// 	attrs = append(attrs, color.Underline)
+	// }
 
-	donate := color.New(attrs...).Sprint(gui.Tr.Donate)
-	return donate + " " + informationStr
+	// donate := color.New(attrs...).Sprint(gui.Tr.Donate)
+	return informationStr
+	// return donate + " " + informationStr
 }
 
 func (gui *Gui) popupViewNames() []string {

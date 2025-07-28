@@ -275,6 +275,10 @@ func (v *View) IsSearching() bool {
 	return v.searcher.searchString != ""
 }
 
+func (v *View) SearchString() string {
+	return v.searcher.searchString
+}
+
 func (v *View) FocusPoint(cx int, cy int) {
 	lineCount := len(v.lines)
 	if cy < 0 || cy > lineCount {
@@ -1104,10 +1108,11 @@ func (v *View) draw() error {
 				bgColor = v.BgColor
 			}
 			if matched, selected := v.isPatternMatchedRune(x, y); matched {
+				fgColor = ColorBlack
 				if selected {
-					bgColor = ColorCyan
+					bgColor = ColorRed
 				} else {
-					bgColor = ColorYellow
+					bgColor = ColorBlue
 				}
 			}
 

@@ -2,6 +2,7 @@ package gui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jesseduffield/gocui"
 )
@@ -51,6 +52,17 @@ func (b *Binding) GetKey() string {
 	}
 
 	return fmt.Sprintf("%c", key)
+}
+
+func (gui *Gui) promptSearchLogs(g *gocui.Gui, v *gocui.View) error {
+	return gui.createPromptPanel("Search Logs", func(g *gocui.Gui, v *gocui.View) error {
+		gui.Views.Main.Autoscroll = false
+		// gui.scrollUpMain()
+		// gui.scrollDownMain()
+
+		searchTerm := strings.TrimSpace(v.Buffer())
+		return gui.Views.Main.Search(searchTerm)
+	})
 }
 
 // GetInitialKeybindings is a function.
@@ -548,6 +560,9 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 	}
 
 	setUpDownClickBindings("main", gui.scrollUpMain, gui.scrollDownMain, gui.handleMainClick)
+	bindings = append(bindings, []*Binding{
+		{ViewName: "main", Key: '/', Modifier: gocui.ModNone, Handler: gui.promptSearchLogs, Description: gui.Tr.LcFilter},
+	}...)
 
 	for _, panel := range gui.allSidePanels() {
 		bindings = append(bindings,
