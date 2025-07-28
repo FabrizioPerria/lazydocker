@@ -562,6 +562,10 @@ func (gui *Gui) GetInitialKeybindings() []*Binding {
 	setUpDownClickBindings("main", gui.scrollUpMain, gui.scrollDownMain, gui.handleMainClick)
 	bindings = append(bindings, []*Binding{
 		{ViewName: "main", Key: '/', Modifier: gocui.ModNone, Handler: gui.promptSearchLogs, Description: gui.Tr.LcFilter},
+		{ViewName: "main", Key: 'h', Modifier: gocui.ModAlt, Handler: wrappedHandler(gui.scrollLeftMainFast), Description: gui.Tr.LcFilter},
+		{ViewName: "main", Key: 'l', Modifier: gocui.ModAlt, Handler: wrappedHandler(gui.scrollRightMainFast), Description: gui.Tr.LcFilter},
+		{ViewName: "main", Key: 'j', Modifier: gocui.ModAlt, Handler: wrappedHandler(gui.scrullDownMainFast), Description: gui.Tr.LcFilter},
+		{ViewName: "main", Key: 'k', Modifier: gocui.ModAlt, Handler: wrappedHandler(gui.scrollUpMainFast), Description: gui.Tr.LcFilter},
 	}...)
 
 	for _, panel := range gui.allSidePanels() {

@@ -6,6 +6,38 @@ import (
 	"github.com/jesseduffield/gocui"
 )
 
+func (gui *Gui) scrollUpMainFast() error {
+	err := gui.scrollUpMain()
+	for i := 0; i < 9; i++ {
+		gui.scrollUpMain()
+	}
+	return err
+}
+
+func (gui *Gui) scrullDownMainFast() error {
+	err := gui.scrollDownMain()
+	for i := 0; i < 9; i++ {
+		gui.scrollDownMain()
+	}
+	return err
+}
+
+func (gui *Gui) scrollRightMainFast() error {
+	err := gui.scrollRightMain(nil, nil)
+	for i := 0; i < 9; i++ {
+		gui.scrollRightMain(nil, nil)
+	}
+	return err
+}
+
+func (gui *Gui) scrollLeftMainFast() error {
+	err := gui.scrollLeftMain(nil, nil)
+	for i := 0; i < 9; i++ {
+		gui.scrollLeftMain(nil, nil)
+	}
+	return err
+}
+
 func (gui *Gui) scrollUpMain() error {
 	mainView := gui.Views.Main
 	mainView.Autoscroll = false
